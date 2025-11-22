@@ -46,12 +46,14 @@
 
         /* Balance Section */
         .balance-container {
-            height: 33vh;
+            height: 35vh; /* Slightly taller to accommodate larger text */
             background-color: var(--primary-color);
-            padding: var(--safe-area-top) 20px 20px;
+            /* CHANGED: Added 50px top buffer to guarantee it never touches the status bar */
+            padding: calc(var(--safe-area-top) + 50px) 20px 30px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            /* CHANGED: switched from 'center' to 'flex-end' to anchor content to bottom */
+            justify-content: flex-end;
             align-items: center;
             color: white;
             flex-shrink: 0;
