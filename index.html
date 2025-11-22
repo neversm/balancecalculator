@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Balance Tracker</title>
+    <style>
+        :root {
+            --primary-color: #1a3a6e;
+            --bg-color: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-color: #000000;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --border-color: #eeeeee;
+            --safe-area-top: env(safe-area-inset-top, 20px);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #e0e0e0; /* Desktop background */
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* App Container - Mobile simulation on Desktop */
+        #app-container {
+            width: 100%;
+            max-width: 480px; /* Mobile width constraint */
+            background-color: var(--card-bg);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* Balance Section */
+        .balance-container {
+            height: 33vh;
+            background-color: var(--primary-color);
+            padding: var(--safe-area-top) 20px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .balance-label {
+            font-size: 18px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .balance-value {
+            font-size: 40px;
+            font-weight: bold;
+            margin-bottom: 25px;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            min-width: 80px;
+            transition: background-color 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Calculator Section */
+        #calculator-overlay {
+            position: absolute;
+            top: 33vh;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-display {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: right;
+            font-size: 24px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        /* Custom Keypad */
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .key-btn {
+            background-color: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .key-btn:active {
+            background-color: #dcdcdc;
+        }
+
+        .enter-btn {
+            grid-column: span 3;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 18px;
+            border: none;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+
+        /* Set Mode Input Specifics */
+        .set-mode-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .set-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        /* Activity History */
+        .activity-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            overflow: hidden;
+        }
+
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: white;
+        }
+
+        .activity-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .clear-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .activity-list {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+
+        .activity-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .activity-row-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .activity-type {
+            font-size: 16px;
+            color: #333;
+        }
+
+        .activity-amount {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .amount-add { color: var(--success-color); }
+        .amount-sub { color: var(--danger-color); }
+
+        .activity-date {
+            font-size: 12px;
+            color: #777;
+        }
+
+        /* Backdrop for calculator dismissal */
+        #backdrop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 50;
+            display: none;
+            cursor: default;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <!-- Balance Section -->
+        <div class="balance-container">
+            <div class="balance-label">Current Balance</div>
+            <div class="balance-value" id="display-balance">$0.00</div>
+            
+            <div class="action-buttons">
+                <button class="action-btn" onclick="toggleCalculator('add')">+</button>
+                <button class="action-btn" onclick="toggleCalculator('subtract')">-</button>
+                <button class="action-btn" onclick="toggleCalculator('set')">Set</button>
+            </div>
+        </div>
+
+        <!-- Calculator Section -->
+        <div id="backdrop" onclick="closeCalculator()"></div>
+        <div id="calculator-overlay">
+            <!-- Dynamic Content injected by JS based on mode -->
+        </div>
+
+        <!-- Activity History Section -->
+        <div class="activity-container">
+            <div class="activity-header">
+                <div class="activity-title">Activity History</div>
+                <button class="clear-btn" onclick="clearActivity()">Clear Activity</button>
+            </div>
+            <div class="activity-list" id="activity-list">
+                <!-- Items injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let balance = 0;
+        let activities = [];
+        let calculatorMode = 'add'; // 'add' | 'subtract' | 'set'
+        let inputValue = '';
+
+        // DOM Elements
+        const displayBalanceEl = document.getElementById('display-balance');
+        const activityListEl = document.getElementById('activity-list');
+        const calculatorOverlayEl = document.getElementById('calculator-overlay');
+        const backdropEl = document.getElementById('backdrop');
+
+        // Formatters
+        const currencyFormatter = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        const formatDate = () => {
+            const now = new Date();
+            return now.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        };
+
+        // Initialization
+        function init() {
+            const savedBalance = localStorage.getItem('balance');
+            const savedActivities = localStorage.getItem('activities');
+
+            if (savedBalance) balance = parseFloat(savedBalance);
+            if (savedActivities) activities = JSON.parse(savedActivities);
+
+            render();
+        }
+
+        // Persistence
+        function saveData() {
+            localStorage.setItem('balance', balance.toString());
+            localStorage.setItem('activities', JSON.stringify(activities));
+            render();
+        }
+
+        // Rendering
+        function render() {
+            displayBalanceEl.textContent = currencyFormatter.format(balance);
+            
+            activityListEl.innerHTML = '';
+            activities.forEach(activity => {
+                const item = document.createElement('div');
+                item.className = 'activity-item';
+                
+                const typeLabel = activity.type === 'add' ? 'Added' : 
+                                  activity.type === 'subtract' ? 'Subtracted' : 'Balance Set';
+                
+                const amountClass = activity.type === 'add' ? 'amount-add' : 
+                                    activity.type === 'subtract' ? 'amount-sub' : '';
+                
+                const prefix = activity.type === 'add' ? '+' : '';
+
+                item.innerHTML = `
+                    <div class="activity-row-top">
+                        <span class="activity-type">${typeLabel}</span>
+                        <span class="activity-amount ${amountClass}">${prefix}${currencyFormatter.format(activity.amount)}</span>
+                    </div>
+                    <div class="activity-date">${activity.date}</div>
+                `;
+                activityListEl.appendChild(item);
+            });
+        }
+
+        // Calculator Logic
+        function toggleCalculator(mode) {
+            calculatorMode = mode;
+            inputValue = '';
+            renderCalculator();
+            calculatorOverlayEl.style.display = 'flex';
+            backdropEl.style.display = 'block';
+        }
+
+        function closeCalculator() {
+            calculatorOverlayEl.style.display = 'none';
+            backdropEl.style.display = 'none';
+            inputValue = '';
+        }
+
+        function handleNumberPress(num) {
+            if (inputValue === '0') inputValue = num;
+            else inputValue += num;
+            updateInputDisplay();
+        }
+
+        function handleDecimalPress() {
+            if (!inputValue.includes('.')) {
+                inputValue += '.';
+                updateInputDisplay();
+            }
+        }
+
+        function handleClear() {
+            inputValue = '';
+            updateInputDisplay();
+        }
+
+        function updateInputDisplay() {
+            const display = document.getElementById('cal-input-display');
+            if(display) display.textContent = inputValue || '0';
+        }
+
+        // Handle Set Input (Text Input logic)
+        function handleSetInputChange(e) {
+            inputValue = e.target.value;
+        }
+
+        function handleEnter() {
+            if (inputValue === '' || inputValue === '.') return;
+
+            const amount = parseFloat(inputValue);
+            if (isNaN(amount)) return;
+
+            const newActivity = {
+                type: calculatorMode,
+                amount: amount,
+                date: formatDate(),
+                id: Date.now().toString()
+            };
+
+            switch(calculatorMode) {
+                case 'add': balance += amount; break;
+                case 'subtract': balance -= amount; break;
+                case 'set': balance = amount; break;
+            }
+
+            activities.unshift(newActivity); // Add to top
+            saveData();
+            closeCalculator();
+        }
+
+        function clearActivity() {
+            if(confirm("Are you sure you want to clear history?")) {
+                activities = [];
+                saveData();
+            }
+        }
+
+        function renderCalculator() {
+            if (calculatorMode === 'set') {
+                calculatorOverlayEl.innerHTML = `
+                    <div class="set-mode-container">
+                        <input type="number" class="set-input" placeholder="Enter new balance" oninput="handleSetInputChange(event)" autofocus>
+                        <button class="enter-btn" onclick="handleEnter()">Enter</button>
+                    </div>
+                `;
+                // Focus the input after a brief delay to allow render
+                setTimeout(() => document.querySelector('.set-input').focus(), 50);
+            } else {
+                calculatorOverlayEl.innerHTML = `
+                    <div class="input-display" id="cal-input-display">0</div>
+                    <div class="keypad">
+                        <button class="key-btn" onclick="handleNumberPress('7')">7</button>
+                        <button class="key-btn" onclick="handleNumberPress('8')">8</button>
+                        <button class="key-btn" onclick="handleNumberPress('9')">9</button>
+                        
+                        <button class="key-btn" onclick="handleNumberPress('4')">4</button>
+                        <button class="key-btn" onclick="handleNumberPress('5')">5</button>
+                        <button class="key-btn" onclick="handleNumberPress('6')">6</button>
+                        
+                        <button class="key-btn" onclick="handleNumberPress('1')">1</button>
+                        <button class="key-btn" onclick="handleNumberPress('2')">2</button>
+                        <button class="key-btn" onclick="handleNumberPress('3')">3</button>
+                        
+                        <button class="key-btn" onclick="handleDecimalPress()">.</button>
+                        <button class="key-btn" onclick="handleNumberPress('0')">0</button>
+                        <button class="key-btn" onclick="handleClear()">C</button>
+                        
+                        <button class="enter-btn" onclick="handleEnter()">Enter</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Run App
+        init();
+
+    </script>
+</body>
+</html>
